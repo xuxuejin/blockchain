@@ -4,8 +4,12 @@ const assert = Utils.assert;
 const timeStamp = Chain.block.timestamp;
 const sender = Chain.msg.sender;
 
+const addressGenesis = "ulpi3r6xjCqtMfFr4Vf6v7v9e5ke3q6QaAHEjh";
+
 // 初始化数据
 let _minter = JSON.parse(Chain.load("minter"));
+let _prefix = JSON.parse(Chain.load("prefix"));
+let _suffix = JSON.parse(Chain.load("suffix"));
 let _owners = JSON.parse(Chain.load("owners"));
 let _balances = JSON.parse(Chain.load("balances"));
 let _tokenApprovals = JSON.parse(Chain.load("tokenApprovals"));
@@ -138,9 +142,9 @@ function _mint(to, tokenId) {
 
 function mint({to}) {
   const index = _tokens.length;
-
-  // 约定：token 格式为 [代号.索引]，如 X.4，第一个 token 为 X.0，后续发行 token 索引自增
-  const newToken = `XuejinXuejinGoog.${index}`;
+  
+  // 约定：token 可指定前后缀，token 索引自增
+  const newToken = `${_prefix}.${index}.${_suffix}`;
 
   // 接受 token 的地址不能为空
   assert(to !== "", reject("_mint", "mint to the zero address."));
@@ -293,8 +297,28 @@ const MAIN_INTERFACE_MAP = new Map([
 ]);
 
 // 约定：只有创世账号可以发行和查询 token
-function init() {
-  saveObj("minter", "ulpi3r6xjCqtMfFr4Vf6v7v9e5ke3q6QaAHEjh");
+function init(input_str) {
+  let { params } = JSON.parse(input_str);
+
+  if (params.minter !== undefined) {
+    saveObj("minter", params.minter);
+  } else {
+    // 默认使用创世块地址
+    saveObj("minter", addressGenesis);
+  }
+
+  if (params.prefix !== undefined) {
+    saveObj("prefix", params.prefix);
+  } else {
+    saveObj("prefix", '');
+  }
+
+  if (params.suffix !== undefined) {
+    saveObj("suffix", params.suffix);
+  } else {
+    saveObj("suffix", '');
+  }
+
   saveObj("tokens", []);
   saveObj("owners", {});
   saveObj("balances", {});
